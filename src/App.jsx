@@ -262,13 +262,13 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
 
   // Auto deep link map — if item name matches, open the app
   const DEEP_LINKS = {
-    "youtube":      { app: "intent://www.youtube.com#Intent;scheme=https;package=com.google.android.youtube;end", web: "https://www.youtube.com" },
-    "disney+":      { app: "intent://www.disneyplus.com#Intent;scheme=https;package=com.disney.disneyplus;end", web: "https://www.disneyplus.com" },
-    "amazon music": { app: "intent://music.amazon.com#Intent;scheme=https;package=com.amazon.mp3;end", web: "https://music.amazon.com" },
-    "netflix":      { app: "intent://www.netflix.com#Intent;scheme=https;package=com.netflix.mediaclient;end", web: "https://www.netflix.com" },
-    "hulu":         { app: "intent://www.hulu.com#Intent;scheme=https;package=com.hulu.plus;end", web: "https://www.hulu.com" },
-    "spotify":      { app: "intent://open.spotify.com#Intent;scheme=https;package=com.spotify.music;end", web: "https://open.spotify.com" },
-    "youtube kids": { app: "intent://www.youtubekids.com#Intent;scheme=https;package=com.google.android.apps.youtube.kids;end", web: "https://www.youtubekids.com" },
+    "youtube":      { app: "intent://#Intent;package=com.google.android.youtube;S.browser_fallback_url=https://www.youtube.com;end", web: "https://www.youtube.com" },
+    "disney+":      { app: "intent://#Intent;package=com.disney.disneyplus;S.browser_fallback_url=https://www.disneyplus.com;end", web: "https://www.disneyplus.com" },
+    "amazon music": { app: "intent://#Intent;package=com.amazon.mp3;S.browser_fallback_url=https://music.amazon.com;end", web: "https://music.amazon.com" },
+    "netflix":      { app: "intent://#Intent;package=com.netflix.mediaclient;S.browser_fallback_url=https://www.netflix.com;end", web: "https://www.netflix.com" },
+    "hulu":         { app: "intent://#Intent;package=com.hulu.plus;S.browser_fallback_url=https://www.hulu.com;end", web: "https://www.hulu.com" },
+    "spotify":      { app: "intent://#Intent;package=com.spotify.music;S.browser_fallback_url=https://open.spotify.com;end", web: "https://open.spotify.com" },
+    "youtube kids": { app: "intent://#Intent;package=com.google.android.apps.youtube.kids;S.browser_fallback_url=https://www.youtubekids.com;end", web: "https://www.youtubekids.com" },
   };
 
   function handlePress() {
@@ -283,10 +283,13 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
 
     const full = phrase ? `${phrase} ${item.name}` : item.name;
     speak(full);
-    onSpeak(full, !!( item.appLink || DEEP_LINKS[item.name.toLowerCase().trim()] ));
 
     const nameKey = item.name.toLowerCase().trim();
-    const deepLink = DEEP_LINKS[nameKey]; // Always use DEEP_LINKS for Android
+    const deepLink = item.appLink
+      ? { app: item.appLink, web: item.webLink || item.appLink }
+      : DEEP_LINKS[nameKey];
+
+    onSpeak(full, !!deepLink);
 
     if (deepLink) {
       window.location.href = deepLink.app;
@@ -621,12 +624,13 @@ const EMOJIS = ["🍕","🍔","🌮","🍦","🍎","🧃","🏠","🌳","🚗","
   "🌈","⭐","❤️","🎉","🌟","✅","❌","🙏","✋","➕","🤷","🤔","🔑","🧸","🎁",
   "🍗","🧀","🥪","🥦","🍟","🧁","🍩","🥤","☀️","🌙","⚡","🔥","💧","🌊"];
 
-function PhotoPickerModal({ title, color, onSave, onClose, showNameField=true, initialName="", nameOptional=false }) {
+function PhotoPickerModal({ title, color, onSave, onClose, showNameField=true, initialName="", nameOptional=false, showLinkField=false, initialLink="" }) {
   const cam = useCamera();
   const [photo, setPhoto] = useState(null);
   const [name, setName] = useState(initialName);
   const [emoji, setEmoji] = useState("⭐");
   const [tab, setTab] = useState("camera");
+  const [appLink, setAppLink] = useState(initialLink);
 
   useEffect(() => {
     if (tab==="camera" && !photo) cam.start();
@@ -652,9 +656,8 @@ function PhotoPickerModal({ title, color, onSave, onClose, showNameField=true, i
 
   function handleSave() {
     if (showNameField && !nameOptional && !name.trim()) return;
-    // On emoji tab, explicitly pass null for photo so emoji shows
     const photoToSave = tab === "emoji" ? null : photo;
-    onSave({ name:name.trim(), emoji, photo:photoToSave });
+    onSave({ name:name.trim(), emoji, photo:photoToSave, appLink:appLink.trim() });
   }
 
   const canSave = (showNameField && !nameOptional) ? !!name.trim() : true;
@@ -718,6 +721,19 @@ function PhotoPickerModal({ title, color, onSave, onClose, showNameField=true, i
             <input value={name} onChange={e=>setName(e.target.value)}
               placeholder={nameOptional ? "Optional: name this (e.g. Red Shirt)" : "Name this item (e.g. McDonald's)"}
               style={{ width:"100%",padding:"12px 16px",borderRadius:14,border:"2px solid #e0e0e0",fontSize:16,fontFamily:"'Nunito',sans-serif",fontWeight:600,outline:"none",boxSizing:"border-box",marginBottom:14 }} />
+          )}
+          {showLinkField && (
+            <div style={{ marginBottom:14 }}>
+              <div style={{ fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:13,color:"#666",marginBottom:6 }}>
+                🔗 App Link (optional)
+              </div>
+              <input value={appLink} onChange={e=>setAppLink(e.target.value)}
+                placeholder="e.g. music://albums/B097XPVXCW"
+                style={{ width:"100%",padding:"12px 16px",borderRadius:14,border:"2px solid #e0e0e0",fontSize:14,fontFamily:"'Nunito',sans-serif",fontWeight:600,outline:"none",boxSizing:"border-box" }} />
+              <div style={{ fontFamily:"'Nunito',sans-serif",fontSize:11,color:"#aaa",marginTop:4 }}>
+                Paste the album or app link here — tapping this button will open it directly
+              </div>
+            </div>
           )}
           <button onClick={handleSave} disabled={!canSave} style={{
             width:"100%",padding:14,borderRadius:14,border:"none",
@@ -1156,30 +1172,29 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
     onUpdateCategory({ ...category, items: updated });
   }
 
-  async function handleSaveItem({ name, emoji, photo }) {
+  async function handleSaveItem({ name, emoji, photo, appLink }) {
     const id = `c_${Date.now()}`;
     let photoUrl = null;
     if (photo && photo.startsWith("data:")) {
-      // It's a base64 image — upload to Firebase Storage
       photoUrl = await handlePhotoUpload(photo, `items/${category.id}/${id}`);
     } else if (photo && photo.startsWith("http")) {
-      // Already a URL — use as is
       photoUrl = photo;
     }
-    // If no photo, just use emoji (photoUrl stays null)
-    persist([...items, { id, name, emoji, photo: photoUrl }]);
+    const newItem = { id, name, emoji, photo: photoUrl };
+    if (appLink) newItem.appLink = appLink;
+    persist([...items, newItem]);
   }
 
-  async function handleEditItem({ name, emoji, photo }) {
+  async function handleEditItem({ name, emoji, photo, appLink }) {
     let photoUrl = photo;
     if (photo && photo.startsWith("data:")) {
-      // New base64 image — upload to Firebase Storage
       photoUrl = await handlePhotoUpload(photo, `items/${category.id}/${editItem.id}`);
     } else if (!photo) {
-      // No photo selected — keep existing
       photoUrl = editItem.photo;
     }
-    persist(items.map(i => i.id===editItem.id ? { ...i, name, emoji, photo:photoUrl } : i));
+    const updated = { ...editItem, name, emoji, photo:photoUrl };
+    if (appLink !== undefined) updated.appLink = appLink || null;
+    persist(items.map(i => i.id===editItem.id ? updated : i));
     setEditItem(null);
   }
 
@@ -1227,7 +1242,8 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
       <Confetti active={confetti} />
       {showAdd && (
         <PhotoPickerModal title="Add New Item" color={category.color}
-          onSave={d=>{ handleSaveItem(d); setShowAdd(false); }} onClose={()=>setShowAdd(false)} />
+          onSave={d=>{ handleSaveItem(d); setShowAdd(false); }} onClose={()=>setShowAdd(false)}
+          showLinkField={true} />
       )}
       {scheduleItem && (
         <ScheduleModal item={scheduleItem} color={category.color}
@@ -1236,7 +1252,8 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
       )}
       {editItem && (
         <PhotoPickerModal title={`Edit: ${editItem.name}`} color={category.color} initialName={editItem.name}
-          onSave={handleEditItem} onClose={()=>setEditItem(null)} />
+          onSave={handleEditItem} onClose={()=>setEditItem(null)}
+          showLinkField={true} initialLink={editItem.appLink || ""} />
       )}
 
       {/* Header */}
