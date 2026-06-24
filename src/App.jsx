@@ -296,10 +296,15 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
         const asin = url.replace("music://albums/", "").split("?")[0].toUpperCase();
         url = `https://music.amazon.com/albums/${asin}`;
       }
-      window.location = url;
-      setTimeout(() => {
-        window.open(deepLink.web, "_blank");
-      }, 2000);
+      // For https URLs (music albums) use location to navigate then back
+      if (url.startsWith("https://")) {
+        window.location.href = url;
+      } else {
+        window.location = url;
+        setTimeout(() => {
+          window.open(deepLink.web, "_blank");
+        }, 2000);
+      }
     }
   }
 
