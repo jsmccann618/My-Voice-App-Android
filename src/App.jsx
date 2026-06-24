@@ -293,19 +293,31 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
 
     if (deepLink) {
       let url = deepLink.app;
-      // If it's a custom scheme (not http/https/intent), convert to intent format
-      if (url && !url.startsWith("http") && !url.startsWith("intent://")) {
+
+      // Convert music://albums/ASIN to Amazon Music https URL
+      if (url && url.startsWith("music://albums/")) {
+        const asin = url.replace("music://albums/", "").split("?")[0].toUpperCase();
+        url = `https://music.amazon.com/albums/${asin}`;
+      }
+      // Convert other custom schemes to intent format
+      else if (url && !url.startsWith("http") && !url.startsWith("intent://")) {
         const scheme = url.split("://")[0];
         const path = url.split("://")[1] || "";
         url = `intent://${path}#Intent;scheme=${scheme};S.browser_fallback_url=https://play.google.com/store;end`;
       }
-      // Create and click a real anchor tag — same method that works for YouTube
-      const a = document.createElement("a");
-      a.href = url;
-      a.rel = "noopener";
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => document.body.removeChild(a), 500);
+
+      if (url.startsWith("intent://")) {
+        // Intent URLs — use window.location.href directly
+        window.location.href = url;
+      } else {
+        // https URLs (music albums etc) — use anchor click
+        const a = document.createElement("a");
+        a.href = url;
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => document.body.removeChild(a), 500);
+      }
     }
   }
 
