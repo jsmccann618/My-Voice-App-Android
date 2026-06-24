@@ -260,13 +260,13 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
 
   // Auto deep link map — if item name matches, open the app
   const DEEP_LINKS = {
-    "youtube":      { app: "intent://#Intent;package=com.google.android.youtube;S.browser_fallback_url=https://www.youtube.com;end", web: "https://www.youtube.com" },
-    "disney+":      { app: "intent://#Intent;package=com.disney.disneyplus;S.browser_fallback_url=https://www.disneyplus.com;end", web: "https://www.disneyplus.com" },
+    "youtube":      { app: "youtube://www.youtube.com", web: "https://www.youtube.com" },
+    "disney+":      { app: "disneyplus://www.disneyplus.com", web: "https://www.disneyplus.com" },
     "amazon music": { app: "intent://#Intent;package=com.amazon.mp3;S.browser_fallback_url=https://music.amazon.com;end", web: "https://music.amazon.com" },
-    "netflix":      { app: "intent://#Intent;package=com.netflix.mediaclient;S.browser_fallback_url=https://www.netflix.com;end", web: "https://www.netflix.com" },
-    "hulu":         { app: "intent://#Intent;package=com.hulu.plus;S.browser_fallback_url=https://www.hulu.com;end", web: "https://www.hulu.com" },
-    "spotify":      { app: "intent://#Intent;package=com.spotify.music;S.browser_fallback_url=https://open.spotify.com;end", web: "https://open.spotify.com" },
-    "youtube kids": { app: "intent://#Intent;package=com.google.android.apps.youtube.kids;S.browser_fallback_url=https://www.youtubekids.com;end", web: "https://www.youtubekids.com" },
+    "netflix":      { app: "nflx://www.netflix.com", web: "https://www.netflix.com" },
+    "hulu":         { app: "hulu://www.hulu.com", web: "https://www.hulu.com" },
+    "spotify":      { app: "spotify://open.spotify.com", web: "https://open.spotify.com" },
+    "youtube kids": { app: "youtubekids://www.youtubekids.com", web: "https://www.youtubekids.com" },
   };
 
   function handlePress() {
