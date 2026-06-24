@@ -283,11 +283,7 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
     speak(full);
 
     const nameKey = item.name.toLowerCase().trim();
-    
-    // Force YouTube and Disney+ to always use DEEP_LINKS — never use stored appLink
-    const forceDeepLink = ["youtube", "disney+", "netflix", "hulu", "spotify", "youtube kids"].includes(nameKey);
-    
-    let deepLink = (!forceDeepLink && item.appLink)
+    const deepLink = item.appLink
       ? { app: item.appLink, web: item.webLink || item.appLink }
       : DEEP_LINKS[nameKey];
 
@@ -295,14 +291,15 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
 
     if (deepLink) {
       let url = deepLink.app;
-
       // Convert music://albums/ASIN to Amazon Music https URL
       if (url && url.startsWith("music://albums/")) {
         const asin = url.replace("music://albums/", "").split("?")[0].toUpperCase();
         url = `https://music.amazon.com/albums/${asin}`;
       }
-
-      window.location.href = url;
+      window.location = url;
+      setTimeout(() => {
+        window.open(deepLink.web, "_blank");
+      }, 2000);
     }
   }
 
@@ -2239,26 +2236,25 @@ export default function MyVoiceApp() {
 
     // Home Mode — load from Firestore as before
     loadFromFirestore(SEED_DATA).then(d => {
-      // Clear any bad appLinks from YouTube and Disney+ that may be stored in Firebase
-      let needsSave = false;
-      const cleaned = {
+      // Force correct Android intent URLs for YouTube and Disney+
+      const fixed = {
         ...d,
         categories: d.categories.map(cat => ({
           ...cat,
           items: (cat.items || []).map(item => {
-            if (["youtube", "disney+"].includes(item.name?.toLowerCase()) && item.appLink) {
-              needsSave = true;
-              const { appLink, webLink, ...rest } = item;
-              return rest;
+            if (item.name?.toLowerCase() === "youtube") {
+              return { ...item, appLink: "intent://#Intent;package=com.google.android.youtube;S.browser_fallback_url=https://www.youtube.com;end", webLink: "https://www.youtube.com" };
+            }
+            if (item.name?.toLowerCase() === "disney+") {
+              return { ...item, appLink: "intent://#Intent;package=com.disney.disneyplus;S.browser_fallback_url=https://www.disneyplus.com;end", webLink: "https://www.disneyplus.com" };
             }
             return item;
           })
         }))
       };
-      if (needsSave) saveToFirestore(cleaned);
-      setData(cleaned);
+      setData(fixed);
       setLoaded(true);
-      if (cleaned.voiceMode) setVoiceMode(true);
+      if (fixed.voiceMode) setVoiceMode(true);
     });
     const sub = subscribeToMessages(msg => {
       if (msg.message === "👍 On my way!") {
