@@ -304,18 +304,14 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
         url = `intent://${path}#Intent;scheme=${scheme};S.browser_fallback_url=https://play.google.com/store;end`;
       }
 
-      if (url.startsWith("intent://")) {
-        // Intent URLs — use window.location.href directly
-        window.location.href = url;
-      } else {
-        // https URLs (music albums etc) — use anchor click
-        const a = document.createElement("a");
-        a.href = url;
-        a.rel = "noopener";
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => document.body.removeChild(a), 500);
-      }
+      // Always use anchor click — works for both intent:// and https://
+      const a = document.createElement("a");
+      a.href = url;
+      a.rel = "noopener noreferrer";
+      if (!url.startsWith("intent://")) a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => document.body.removeChild(a), 500);
     }
   }
 
