@@ -297,9 +297,15 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
       if (url && !url.startsWith("http") && !url.startsWith("intent://")) {
         const scheme = url.split("://")[0];
         const path = url.split("://")[1] || "";
-        url = `intent://${path}#Intent;scheme=${scheme};end`;
+        url = `intent://${path}#Intent;scheme=${scheme};S.browser_fallback_url=https://play.google.com/store;end`;
       }
-      window.location.href = url;
+      // Create and click a real anchor tag — same method that works for YouTube
+      const a = document.createElement("a");
+      a.href = url;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => document.body.removeChild(a), 500);
     }
   }
 
