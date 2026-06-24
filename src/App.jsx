@@ -83,12 +83,12 @@ const SEED_CATEGORIES = [
       {
         id:"w1", name:"YouTube", emoji:"▶️", photo:null,
         logo:"https://www.youtube.com/img/desktop/yt_1200.png",
-        appLink:"youtube://", webLink:"https://www.youtube.com",
+        appLink:"intent://#Intent;package=com.google.android.youtube;S.browser_fallback_url=https://www.youtube.com;end", webLink:"https://www.youtube.com",
       },
       {
         id:"w2", name:"Disney+", emoji:"✨", photo:null,
         logo:"https://cnbl-cdn.bamgrid.com/assets/7ecc8bcb60ad77193058d63e321bd21cbac2fc67625b0a9de6c88b3155c19c69/original",
-        appLink:"disneyplus://", webLink:"https://www.disneyplus.com",
+        appLink:"intent://#Intent;package=com.disney.disneyplus;S.browser_fallback_url=https://www.disneyplus.com;end", webLink:"https://www.disneyplus.com",
       },
     ],
   },
@@ -285,14 +285,21 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
     speak(full);
 
     const nameKey = item.name.toLowerCase().trim();
-    const deepLink = item.appLink
+    let deepLink = item.appLink
       ? { app: item.appLink, web: item.webLink || item.appLink }
       : DEEP_LINKS[nameKey];
 
     onSpeak(full, !!deepLink);
 
     if (deepLink) {
-      window.location.href = deepLink.app;
+      let url = deepLink.app;
+      // If it's a custom scheme (not http/https/intent), convert to intent format
+      if (url && !url.startsWith("http") && !url.startsWith("intent://")) {
+        const scheme = url.split("://")[0];
+        const path = url.split("://")[1] || "";
+        url = `intent://${path}#Intent;scheme=${scheme};end`;
+      }
+      window.location.href = url;
     }
   }
 
