@@ -296,9 +296,13 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
         const asin = url.replace("music://albums/", "").split("?")[0].toUpperCase();
         url = `https://music.amazon.com/albums/${asin}`;
       }
-      // For https URLs (music albums) use location to navigate then back
+      // For https URLs (music albums)
       if (url.startsWith("https://")) {
         window.location.href = url;
+        // Immediately navigate back to app home so PWA doesn't show the website
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 100);
       } else {
         window.location = url;
         setTimeout(() => {
