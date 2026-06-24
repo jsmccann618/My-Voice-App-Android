@@ -283,7 +283,11 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
     speak(full);
 
     const nameKey = item.name.toLowerCase().trim();
-    let deepLink = item.appLink
+    
+    // Force YouTube and Disney+ to always use DEEP_LINKS — never use stored appLink
+    const forceDeepLink = ["youtube", "disney+", "netflix", "hulu", "spotify", "youtube kids"].includes(nameKey);
+    
+    let deepLink = (!forceDeepLink && item.appLink)
       ? { app: item.appLink, web: item.webLink || item.appLink }
       : DEEP_LINKS[nameKey];
 
@@ -297,21 +301,8 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
         const asin = url.replace("music://albums/", "").split("?")[0].toUpperCase();
         url = `https://music.amazon.com/albums/${asin}`;
       }
-      // Convert other custom schemes to intent format
-      else if (url && !url.startsWith("http") && !url.startsWith("intent://")) {
-        const scheme = url.split("://")[0];
-        const path = url.split("://")[1] || "";
-        url = `intent://${path}#Intent;scheme=${scheme};S.browser_fallback_url=https://play.google.com/store;end`;
-      }
 
-      // Always use anchor click — works for both intent:// and https://
-      const a = document.createElement("a");
-      a.href = url;
-      a.rel = "noopener noreferrer";
-      if (!url.startsWith("intent://")) a.target = "_blank";
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => document.body.removeChild(a), 500);
+      window.location.href = url;
     }
   }
 
