@@ -296,19 +296,12 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
         const asin = url.replace("music://albums/", "").split("?")[0].toUpperCase();
         url = `https://music.amazon.com/albums/${asin}`;
       }
-      // For https URLs (music albums)
-      if (url.startsWith("https://")) {
-        window.location.href = url;
-        // Immediately navigate back to app home so PWA doesn't show the website
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 100);
-      } else {
-        window.location = url;
-        setTimeout(() => {
-          window.open(deepLink.web, "_blank");
-        }, 2000);
-      }
+      // For ALL links — navigate to URL (Android intercepts and opens app)
+      // then immediately redirect back to PWA home
+      window.location.href = url;
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 100);
     }
   }
 
@@ -2245,17 +2238,17 @@ export default function MyVoiceApp() {
 
     // Home Mode — load from Firestore as before
     loadFromFirestore(SEED_DATA).then(d => {
-      // Force correct Android intent URLs for YouTube and Disney+
+      // Force correct URLs for YouTube and Disney+ — use https so Android intercepts
       const fixed = {
         ...d,
         categories: d.categories.map(cat => ({
           ...cat,
           items: (cat.items || []).map(item => {
             if (item.name?.toLowerCase() === "youtube") {
-              return { ...item, appLink: "intent://#Intent;package=com.google.android.youtube;S.browser_fallback_url=https://www.youtube.com;end", webLink: "https://www.youtube.com" };
+              return { ...item, appLink: "https://www.youtube.com", webLink: "https://www.youtube.com" };
             }
             if (item.name?.toLowerCase() === "disney+") {
-              return { ...item, appLink: "intent://#Intent;package=com.disney.disneyplus;S.browser_fallback_url=https://www.disneyplus.com;end", webLink: "https://www.disneyplus.com" };
+              return { ...item, appLink: "https://www.disneyplus.com", webLink: "https://www.disneyplus.com" };
             }
             return item;
           })
