@@ -1216,6 +1216,8 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
     setLastSpoken(text);
     setConfetti(true);
     setTimeout(()=>setConfetti(false), 1600);
+    // Speak the phrase out loud
+    speak(text);
     // Send to parent companion via Supabase
     sendMessage(text);
     // Send push notification to parent's phone via Pushover
