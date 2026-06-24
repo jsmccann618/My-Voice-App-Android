@@ -83,12 +83,10 @@ const SEED_CATEGORIES = [
       {
         id:"w1", name:"YouTube", emoji:"▶️", photo:null,
         logo:"https://www.youtube.com/img/desktop/yt_1200.png",
-        appLink:"intent://#Intent;package=com.google.android.youtube;S.browser_fallback_url=https://www.youtube.com;end", webLink:"https://www.youtube.com",
       },
       {
         id:"w2", name:"Disney+", emoji:"✨", photo:null,
         logo:"https://cnbl-cdn.bamgrid.com/assets/7ecc8bcb60ad77193058d63e321bd21cbac2fc67625b0a9de6c88b3155c19c69/original",
-        appLink:"intent://#Intent;package=com.disney.disneyplus;S.browser_fallback_url=https://www.disneyplus.com;end", webLink:"https://www.disneyplus.com",
       },
     ],
   },
@@ -1268,7 +1266,7 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
       {showAdd && (
         <PhotoPickerModal title="Add New Item" color={category.color}
           onSave={d=>{ handleSaveItem(d); setShowAdd(false); }} onClose={()=>setShowAdd(false)}
-          showLinkField={true} />
+          showLinkField={category.id === "listen"} />
       )}
       {scheduleItem && (
         <ScheduleModal item={scheduleItem} color={category.color}
@@ -1278,7 +1276,7 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
       {editItem && (
         <PhotoPickerModal title={`Edit: ${editItem.name}`} color={category.color} initialName={editItem.name}
           onSave={handleEditItem} onClose={()=>setEditItem(null)}
-          showLinkField={true} initialLink={editItem.appLink || ""} />
+          showLinkField={category.id === "listen"} initialLink={editItem.appLink || ""} />
       )}
 
       {/* Header */}
@@ -2254,9 +2252,23 @@ export default function MyVoiceApp() {
 
     // Home Mode — load from Firestore as before
     loadFromFirestore(SEED_DATA).then(d => {
-      setData(d);
+      // Clear any bad appLinks from YouTube and Disney+ that may be stored in Firebase
+      const cleaned = {
+        ...d,
+        categories: d.categories.map(cat => ({
+          ...cat,
+          items: (cat.items || []).map(item => {
+            if (["youtube", "disney+"].includes(item.name?.toLowerCase())) {
+              const { appLink, webLink, ...rest } = item;
+              return rest;
+            }
+            return item;
+          })
+        }))
+      };
+      setData(cleaned);
       setLoaded(true);
-      if (d.voiceMode) setVoiceMode(true);
+      if (cleaned.voiceMode) setVoiceMode(true);
     });
     const sub = subscribeToMessages(msg => {
       if (msg.message === "👍 On my way!") {
