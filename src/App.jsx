@@ -213,23 +213,32 @@ function speak(text) {
 
   function pickVoiceAndSpeak() {
     const voices = window.speechSynthesis.getVoices();
-    // Preferred male voices by name across iOS, macOS, Android, Windows
     const maleNames = ["Alex","Fred","Daniel","Aaron","Arthur","Gordon","Reed","Thomas","Rishi","Microsoft David","Microsoft Mark","Google US English"];
     let chosen = null;
     for (const name of maleNames) {
       const match = voices.find(v => v.name.toLowerCase().includes(name.toLowerCase()));
       if (match) { chosen = match; break; }
     }
-    // Fallback: any English voice, drop pitch lower to sound more male
     if (!chosen) {
       chosen = voices.find(v => v.lang.startsWith("en")) || null;
       u.pitch = 0.75;
     }
     if (chosen) u.voice = chosen;
+
+    // Try to boost volume using Web Audio API
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        const ctx = new AudioContext();
+        const gain = ctx.createGain();
+        gain.gain.value = 2.0; // boost by 2x
+        gain.connect(ctx.destination);
+      }
+    } catch(e) {}
+
     window.speechSynthesis.speak(u);
   }
 
-  // Voices may not be loaded yet on first call — wait if needed
   const voices = window.speechSynthesis.getVoices();
   if (voices.length > 0) {
     pickVoiceAndSpeak();
