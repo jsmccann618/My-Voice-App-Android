@@ -1266,7 +1266,7 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
       {showAdd && (
         <PhotoPickerModal title="Add New Item" color={category.color}
           onSave={d=>{ handleSaveItem(d); setShowAdd(false); }} onClose={()=>setShowAdd(false)}
-          showLinkField={category.id === "listen"} />
+          showLinkField={category.label?.toLowerCase().includes("listen")} />
       )}
       {scheduleItem && (
         <ScheduleModal item={scheduleItem} color={category.color}
@@ -1276,7 +1276,7 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
       {editItem && (
         <PhotoPickerModal title={`Edit: ${editItem.name}`} color={category.color} initialName={editItem.name}
           onSave={handleEditItem} onClose={()=>setEditItem(null)}
-          showLinkField={category.id === "listen"} initialLink={editItem.appLink || ""} />
+          showLinkField={category.label?.toLowerCase().includes("listen")} initialLink={editItem.appLink || ""} />
       )}
 
       {/* Header */}
@@ -2253,12 +2253,14 @@ export default function MyVoiceApp() {
     // Home Mode — load from Firestore as before
     loadFromFirestore(SEED_DATA).then(d => {
       // Clear any bad appLinks from YouTube and Disney+ that may be stored in Firebase
+      let needsSave = false;
       const cleaned = {
         ...d,
         categories: d.categories.map(cat => ({
           ...cat,
           items: (cat.items || []).map(item => {
-            if (["youtube", "disney+"].includes(item.name?.toLowerCase())) {
+            if (["youtube", "disney+"].includes(item.name?.toLowerCase()) && item.appLink) {
+              needsSave = true;
               const { appLink, webLink, ...rest } = item;
               return rest;
             }
@@ -2266,6 +2268,7 @@ export default function MyVoiceApp() {
           })
         }))
       };
+      if (needsSave) saveToFirestore(cleaned);
       setData(cleaned);
       setLoaded(true);
       if (cleaned.voiceMode) setVoiceMode(true);
