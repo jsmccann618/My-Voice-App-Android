@@ -1253,7 +1253,7 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
       {showAdd && (
         <PhotoPickerModal title="Add New Item" color={category.color}
           onSave={d=>{ handleSaveItem(d); setShowAdd(false); }} onClose={()=>setShowAdd(false)}
-          showLinkField={category.label?.toLowerCase().includes("listen")} />
+          showLinkField={true} />
       )}
       {scheduleItem && (
         <ScheduleModal item={scheduleItem} color={category.color}
@@ -1263,7 +1263,7 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
       {editItem && (
         <PhotoPickerModal title={`Edit: ${editItem.name}`} color={category.color} initialName={editItem.name}
           onSave={handleEditItem} onClose={()=>setEditItem(null)}
-          showLinkField={category.label?.toLowerCase().includes("listen")} initialLink={editItem.appLink || ""} />
+          showLinkField={true} initialLink={editItem.appLink || ""} />
       )}
 
       {/* Header */}
