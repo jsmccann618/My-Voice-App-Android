@@ -262,14 +262,13 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
 
   // Auto deep link map — if item name matches, open the app
   const DEEP_LINKS = {
-    "youtube":       { app: "youtube://",      web: "https://www.youtube.com" },
-    "disney+":       { app: "disneyplus://",   web: "https://www.disneyplus.com" },
-    "amazon music":  { app: "https://music.amazon.com", web: "https://music.amazon.com" },
-    "netflix":       { app: "nflx://",         web: "https://www.netflix.com" },
-    "hulu":          { app: "hulu://",         web: "https://www.hulu.com" },
-    "spotify":       { app: "spotify://",      web: "https://www.spotify.com" },
-    "apple music":   { app: "music://",        web: "https://music.apple.com" },
-    "youtube kids":  { app: "youtubekids://",  web: "https://www.youtubekids.com" },
+    "youtube":      { app: "intent://www.youtube.com#Intent;scheme=https;package=com.google.android.youtube;end", web: "https://www.youtube.com" },
+    "disney+":      { app: "intent://www.disneyplus.com#Intent;scheme=https;package=com.disney.disneyplus;end", web: "https://www.disneyplus.com" },
+    "amazon music": { app: "intent://music.amazon.com#Intent;scheme=https;package=com.amazon.mp3;end", web: "https://music.amazon.com" },
+    "netflix":      { app: "intent://www.netflix.com#Intent;scheme=https;package=com.netflix.mediaclient;end", web: "https://www.netflix.com" },
+    "hulu":         { app: "intent://www.hulu.com#Intent;scheme=https;package=com.hulu.plus;end", web: "https://www.hulu.com" },
+    "spotify":      { app: "intent://open.spotify.com#Intent;scheme=https;package=com.spotify.music;end", web: "https://open.spotify.com" },
+    "youtube kids": { app: "intent://www.youtubekids.com#Intent;scheme=https;package=com.google.android.apps.youtube.kids;end", web: "https://www.youtubekids.com" },
   };
 
   function handlePress() {
@@ -286,19 +285,11 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
     speak(full);
     onSpeak(full, !!( item.appLink || DEEP_LINKS[item.name.toLowerCase().trim()] ));
 
-    // Check item's own appLink first, then check name against deep link map
     const nameKey = item.name.toLowerCase().trim();
-    const deepLink = item.appLink ? { app: item.appLink, web: item.webLink } : DEEP_LINKS[nameKey];
+    const deepLink = DEEP_LINKS[nameKey]; // Always use DEEP_LINKS for Android
 
     if (deepLink) {
-      // Try the app URL scheme first, fall back to web URL
-      const tryApp = deepLink.app;
-      const fallback = deepLink.web;
-      window.location = tryApp;
-      setTimeout(() => {
-        // If we're still here after 2s, the app didn't open — try web URL
-        window.open(fallback, "_blank");
-      }, 2000);
+      window.location.href = deepLink.app;
     }
   }
 
