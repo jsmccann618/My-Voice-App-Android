@@ -7,7 +7,7 @@ const FONT_LINK = "https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;
 // ─── Seed Data ────────────────────────────────────────────────────────────────
 const SEED_CATEGORIES = [
   {
-    id:"eat", label:"I Want to Eat", emoji:"🍽️", photo:null,
+    id:"eat", label:"Food & Drinks", emoji:"🍽️", photo:null,
     color:"#FF6B35", dark:"#C94A1A", light:"#FFAA85", phrase:"I want to eat",
     items:[
       {id:"e1",name:"Pizza",emoji:"🍕",photo:null},
@@ -288,7 +288,12 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
       return;
     }
 
-    const full = phrase ? `${phrase} ${item.name}` : item.name;
+    // Use itemType to determine phrase for food/drink items
+    let phraseToUse = phrase;
+    if (item.itemType === "drink") phraseToUse = "I want to drink";
+    else if (item.itemType === "food") phraseToUse = "I want to eat";
+
+    const full = phraseToUse ? `${phraseToUse} ${item.name}` : item.name;
     speak(full);
 
     const nameKey = item.name.toLowerCase().trim();
@@ -642,13 +647,14 @@ const EMOJIS = ["🍕","🍔","🌮","🍦","🍎","🧃","🏠","🌳","🚗","
   "🌈","⭐","❤️","🎉","🌟","✅","❌","🙏","✋","➕","🤷","🤔","🔑","🧸","🎁",
   "🍗","🧀","🥪","🥦","🍟","🧁","🍩","🥤","☀️","🌙","⚡","🔥","💧","🌊"];
 
-function PhotoPickerModal({ title, color, onSave, onClose, showNameField=true, initialName="", nameOptional=false, showLinkField=false, initialLink="" }) {
+function PhotoPickerModal({ title, color, onSave, onClose, showNameField=true, initialName="", nameOptional=false, showLinkField=false, initialLink="", showTypeField=false, initialType="" }) {
   const cam = useCamera();
   const [photo, setPhoto] = useState(null);
   const [name, setName] = useState(initialName);
   const [emoji, setEmoji] = useState("⭐");
   const [tab, setTab] = useState("camera");
   const [appLink, setAppLink] = useState(initialLink);
+  const [itemType, setItemType] = useState(initialType || "food"); // "food" or "drink"
 
   useEffect(() => {
     if (tab==="camera" && !photo) cam.start();
@@ -675,7 +681,7 @@ function PhotoPickerModal({ title, color, onSave, onClose, showNameField=true, i
   function handleSave() {
     if (showNameField && !nameOptional && !name.trim()) return;
     const photoToSave = tab === "emoji" ? null : photo;
-    onSave({ name:name.trim(), emoji, photo:photoToSave, appLink:appLink.trim() });
+    onSave({ name:name.trim(), emoji, photo:photoToSave, appLink:appLink.trim(), itemType });
   }
 
   const canSave = (showNameField && !nameOptional) ? !!name.trim() : true;
@@ -739,6 +745,25 @@ function PhotoPickerModal({ title, color, onSave, onClose, showNameField=true, i
             <input value={name} onChange={e=>setName(e.target.value)}
               placeholder={nameOptional ? "Optional: name this (e.g. Red Shirt)" : "Name this item (e.g. McDonald's)"}
               style={{ width:"100%",padding:"12px 16px",borderRadius:14,border:"2px solid #e0e0e0",fontSize:16,fontFamily:"'Nunito',sans-serif",fontWeight:600,outline:"none",boxSizing:"border-box",marginBottom:14 }} />
+          )}
+          {showTypeField && (
+            <div style={{ marginBottom:14 }}>
+              <div style={{ fontFamily:"'Nunito',sans-serif",fontWeight:700,fontSize:13,color:"#666",marginBottom:8 }}>
+                Is this a food or drink?
+              </div>
+              <div style={{ display:"flex", gap:10 }}>
+                <button onClick={()=>setItemType("food")} style={{
+                  flex:1, padding:"12px 0", borderRadius:14, border:`2px solid ${itemType==="food"?color:"#e0e0e0"}`,
+                  background:itemType==="food"?color:"#fff", color:itemType==="food"?"#fff":"#666",
+                  fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:15, cursor:"pointer",
+                }}>🍔 Food</button>
+                <button onClick={()=>setItemType("drink")} style={{
+                  flex:1, padding:"12px 0", borderRadius:14, border:`2px solid ${itemType==="drink"?color:"#e0e0e0"}`,
+                  background:itemType==="drink"?color:"#fff", color:itemType==="drink"?"#fff":"#666",
+                  fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:15, cursor:"pointer",
+                }}>🥤 Drink</button>
+              </div>
+            </div>
           )}
           {showLinkField && (
             <div style={{ marginBottom:14 }}>
@@ -1190,7 +1215,7 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
     onUpdateCategory({ ...category, items: updated });
   }
 
-  async function handleSaveItem({ name, emoji, photo, appLink }) {
+  async function handleSaveItem({ name, emoji, photo, appLink, itemType }) {
     const id = `c_${Date.now()}`;
     let photoUrl = null;
     if (photo && photo.startsWith("data:")) {
@@ -1200,10 +1225,11 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
     }
     const newItem = { id, name, emoji, photo: photoUrl };
     if (appLink) newItem.appLink = appLink;
+    if (itemType) newItem.itemType = itemType;
     persist([...items, newItem]);
   }
 
-  async function handleEditItem({ name, emoji, photo, appLink }) {
+  async function handleEditItem({ name, emoji, photo, appLink, itemType }) {
     let photoUrl = photo;
     if (photo && photo.startsWith("data:")) {
       photoUrl = await handlePhotoUpload(photo, `items/${category.id}/${editItem.id}`);
@@ -1212,6 +1238,7 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
     }
     const updated = { ...editItem, name, emoji, photo:photoUrl };
     if (appLink !== undefined) updated.appLink = appLink || null;
+    if (itemType) updated.itemType = itemType;
     persist(items.map(i => i.id===editItem.id ? updated : i));
     setEditItem(null);
   }
@@ -1263,7 +1290,8 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
       {showAdd && (
         <PhotoPickerModal title="Add New Item" color={category.color}
           onSave={d=>{ handleSaveItem(d); setShowAdd(false); }} onClose={()=>setShowAdd(false)}
-          showLinkField={true} />
+          showLinkField={true}
+          showTypeField={category.label?.toLowerCase().includes("food") || category.label?.toLowerCase().includes("drink")} />
       )}
       {scheduleItem && (
         <ScheduleModal item={scheduleItem} color={category.color}
@@ -1273,7 +1301,9 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
       {editItem && (
         <PhotoPickerModal title={`Edit: ${editItem.name}`} color={category.color} initialName={editItem.name}
           onSave={handleEditItem} onClose={()=>setEditItem(null)}
-          showLinkField={true} initialLink={editItem.appLink || ""} />
+          showLinkField={true} initialLink={editItem.appLink || ""}
+          showTypeField={category.label?.toLowerCase().includes("food") || category.label?.toLowerCase().includes("drink")}
+          initialType={editItem.itemType || "food"} />
       )}
 
       {/* Header */}
