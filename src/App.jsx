@@ -1339,7 +1339,7 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
 }
 
 // ─── Settings Screen ──────────────────────────────────────────────────────────
-function SettingsScreen({ categories, onUpdateCategories, onBack, onChangePin, currentPin }) {
+function SettingsScreen({ categories, onUpdateCategories, onBack, onChangePin, currentPin, onSave }) {
   const [showCatPhoto, setShowCatPhoto] = useState(null);
   const [showEditCat, setShowEditCat] = useState(null);
   const [showAddCat, setShowAddCat] = useState(false);
@@ -1427,6 +1427,13 @@ function SettingsScreen({ categories, onUpdateCategories, onBack, onChangePin, c
         <div style={{ color:"#fff",fontSize:20,fontWeight:800,fontFamily:"'Nunito',sans-serif" }}>⚙️ Parent Settings</div>
       </div>
       <div style={{ padding:"20px 20px 40px" }}>
+        {/* Emergency Save Button */}
+        <button onClick={onSave} style={{
+          width:"100%", padding:16, borderRadius:14, border:"none",
+          background:"#10B981", color:"#fff", fontSize:17, fontWeight:900,
+          fontFamily:"'Nunito',sans-serif", cursor:"pointer", marginBottom:20,
+          boxShadow:"0 4px 14px rgba(16,185,129,0.4)",
+        }}>💾 Save All Data to Firebase</button>
         <div style={{ fontFamily:"'Nunito',sans-serif",fontWeight:800,fontSize:16,color:"#1a1a2e",marginBottom:12 }}>Categories</div>
         <div style={{ display:"flex",flexDirection:"column",gap:12,marginBottom:20 }}>
           {categories.map(cat=>(
@@ -2510,7 +2517,8 @@ export default function MyVoiceApp() {
         <SettingsScreen categories={activeData.categories} currentPin={activeData.parentPin}
           onUpdateCategories={updateAllCategories}
           onChangePin={pin=>persist({...activeData,parentPin:pin})}
-          onBack={()=>setScreen("home")} />
+          onBack={()=>setScreen("home")}
+          onSave={()=>{ saveData(activeData); alert("✅ Saved to Firebase successfully!"); }} />
       )}
     </div>
   );
