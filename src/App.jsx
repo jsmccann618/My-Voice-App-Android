@@ -2494,9 +2494,26 @@ export default function MyVoiceApp() {
               activeData.categories
                 .filter(cat => parentMode || isAvailable(cat))
                 .map((cat,i) => (
-                  <HomeBlobCard key={cat.id} cat={cat} index={i} parentMode={parentMode}
-                    onClick={()=>{ setActiveCategory(cat); setScreen("category"); }}
-                  />
+                  <div key={cat.id} style={{ position:"relative" }}>
+                    <HomeBlobCard cat={cat} index={i} parentMode={parentMode}
+                      onClick={()=>{ setActiveCategory(cat); setScreen("category"); }} />
+                    {parentMode && (
+                      <div style={{ position:"absolute", top:0, right:0, display:"flex", flexDirection:"column", gap:4, padding:4 }}>
+                        <button onClick={()=>{
+                          const cats = [...activeData.categories];
+                          if (i === 0) return;
+                          [cats[i-1], cats[i]] = [cats[i], cats[i-1]];
+                          updateAllCategories(cats);
+                        }} style={{ background:"rgba(0,0,0,0.5)", border:"none", borderRadius:8, width:28, height:28, cursor:"pointer", color:"#fff", fontSize:14, display:"flex", alignItems:"center", justifyContent:"center" }}>▲</button>
+                        <button onClick={()=>{
+                          const cats = [...activeData.categories];
+                          if (i === cats.length - 1) return;
+                          [cats[i], cats[i+1]] = [cats[i+1], cats[i]];
+                          updateAllCategories(cats);
+                        }} style={{ background:"rgba(0,0,0,0.5)", border:"none", borderRadius:8, width:28, height:28, cursor:"pointer", color:"#fff", fontSize:14, display:"flex", alignItems:"center", justifyContent:"center" }}>▼</button>
+                      </div>
+                    )}
+                  </div>
                 ))
             )}
           </div>
