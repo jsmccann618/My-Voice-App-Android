@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc, getDoc, enableIndexedDbPersistence } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from "firebase/storage";
 
 const firebaseConfig = {
@@ -15,53 +15,70 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// ─── Enable offline persistence ───────────────────────────────────────────────
-// This caches Firestore data locally so the app loads even with no internet
-enableIndexedDbPersistence(db).catch((err) => {
-  if (err.code === "failed-precondition") {
-    // Multiple tabs open — persistence only works in one tab at a time
-    console.warn("Firestore persistence unavailable: multiple tabs open");
-  } else if (err.code === "unimplemented") {
-    // Browser doesn't support persistence
-    console.warn("Firestore persistence not supported in this browser");
-  }
-});
-
 const HOME_DOC_REF = doc(db, "myvoice", "appdata");
 const SCHOOL_DOC_REF = doc(db, "myvoice", "school_appdata");
+
+const LS_KEY_HOME   = "myvoice_data_home";
+const LS_KEY_SCHOOL = "myvoice_data_school";
 
 function getDocRef(mode) {
   return mode === "school" ? SCHOOL_DOC_REF : HOME_DOC_REF;
 }
 
+function getLSKey(mode) {
+  return mode === "school" ? LS_KEY_SCHOOL : LS_KEY_HOME;
+}
+
+// Save to localStorage backup
+function saveLocal(mode, data) {
+  try { localStorage.setItem(getLSKey(mode), JSON.stringify(data)); } catch {}
+}
+
+// Load from localStorage backup
+function loadLocal(mode) {
+  try {
+    const raw = localStorage.getItem(getLSKey(mode));
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
 // ─── Firestore ────────────────────────────────────────────────────────────────
 export async function loadFromFirestore(seedData, mode = "home") {
+  // Try Firestore with a 6 second timeout
   try {
-    // Add a 5 second timeout — if offline and no cache, fall back to seedData
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("timeout")), 5000)
+      setTimeout(() => reject(new Error("timeout")), 6000)
     );
     const snap = await Promise.race([getDoc(getDocRef(mode)), timeoutPromise]);
-    if (snap.exists()) return snap.data();
+    if (snap.exists()) {
+      const data = snap.data();
+      saveLocal(mode, data); // always update local backup when online
+      return data;
+    }
+    // First run — save seed data
     await setDoc(getDocRef(mode), seedData);
+    saveLocal(mode, seedData);
     return seedData;
   } catch (e) {
-    console.error("Firestore load error:", e);
+    console.warn("Firestore unavailable, using local backup:", e.message);
+    // Offline or timed out — use localStorage backup
+    const local = loadLocal(mode);
+    if (local) return local;
     return seedData;
   }
 }
 
 export async function saveToFirestore(data, mode = "home") {
+  saveLocal(mode, data); // always save locally immediately
   try {
     await setDoc(getDocRef(mode), data);
   } catch (e) {
     console.error("Firestore save error:", e);
+    // Data is already saved locally — it will sync next time online
   }
 }
 
 // ─── Firebase Storage (photos) ────────────────────────────────────────────────
-
-// Upload a base64 photo to Firebase Storage, return the download URL
 export async function uploadPhoto(base64Data, path) {
   try {
     const storageRef = ref(storage, path);
@@ -76,7 +93,6 @@ export async function uploadPhoto(base64Data, path) {
   }
 }
 
-// Delete a photo from Firebase Storage
 export async function deletePhoto(path) {
   try {
     const storageRef = ref(storage, path);
@@ -85,3 +101,4 @@ export async function deletePhoto(path) {
     console.error("Storage delete error:", e);
   }
 }
+
