@@ -44,26 +44,33 @@ function loadLocal(mode) {
 
 // ─── Firestore ────────────────────────────────────────────────────────────────
 export async function loadFromFirestore(seedData, mode = "home") {
-  // Try Firestore with a 6 second timeout
+  // Step 1 — Check localStorage first (instant, works offline)
+  const local = loadLocal(mode);
+  if (local) {
+    // We have local data — return it immediately
+    // Then sync from Firebase in the background if online
+    if (navigator.onLine) {
+      getDoc(getDocRef(mode)).then(snap => {
+        if (snap.exists()) saveLocal(mode, snap.data());
+      }).catch(() => {});
+    }
+    return local;
+  }
+
+  // Step 2 — No local data yet, must be first run — try Firebase
   try {
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("timeout")), 6000)
-    );
-    const snap = await Promise.race([getDoc(getDocRef(mode)), timeoutPromise]);
+    const snap = await getDoc(getDocRef(mode));
     if (snap.exists()) {
       const data = snap.data();
-      saveLocal(mode, data); // always update local backup when online
+      saveLocal(mode, data);
       return data;
     }
-    // First run — save seed data
+    // Brand new — save seed data
     await setDoc(getDocRef(mode), seedData);
     saveLocal(mode, seedData);
     return seedData;
   } catch (e) {
-    console.warn("Firestore unavailable, using local backup:", e.message);
-    // Offline or timed out — use localStorage backup
-    const local = loadLocal(mode);
-    if (local) return local;
+    console.warn("Firestore unavailable on first run:", e.message);
     return seedData;
   }
 }
