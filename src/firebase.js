@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc, enableIndexedDbPersistence } from "firebase/firestore";
 import { getStorage, ref, uploadString, getDownloadURL, deleteObject } from "firebase/storage";
 
 const firebaseConfig = {
@@ -15,6 +15,18 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// ─── Enable offline persistence ───────────────────────────────────────────────
+// This caches Firestore data locally so the app loads even with no internet
+enableIndexedDbPersistence(db).catch((err) => {
+  if (err.code === "failed-precondition") {
+    // Multiple tabs open — persistence only works in one tab at a time
+    console.warn("Firestore persistence unavailable: multiple tabs open");
+  } else if (err.code === "unimplemented") {
+    // Browser doesn't support persistence
+    console.warn("Firestore persistence not supported in this browser");
+  }
+});
+
 const HOME_DOC_REF = doc(db, "myvoice", "appdata");
 const SCHOOL_DOC_REF = doc(db, "myvoice", "school_appdata");
 
@@ -25,7 +37,11 @@ function getDocRef(mode) {
 // ─── Firestore ────────────────────────────────────────────────────────────────
 export async function loadFromFirestore(seedData, mode = "home") {
   try {
-    const snap = await getDoc(getDocRef(mode));
+    // Add a 5 second timeout — if offline and no cache, fall back to seedData
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("timeout")), 5000)
+    );
+    const snap = await Promise.race([getDoc(getDocRef(mode)), timeoutPromise]);
     if (snap.exists()) return snap.data();
     await setDoc(getDocRef(mode), seedData);
     return seedData;
@@ -49,7 +65,6 @@ export async function saveToFirestore(data, mode = "home") {
 export async function uploadPhoto(base64Data, path) {
   try {
     const storageRef = ref(storage, path);
-    // Strip the data:image/...;base64, prefix
     const base64String = base64Data.includes(",") ? base64Data.split(",")[1] : base64Data;
     const format = base64Data.includes("jpeg") ? "jpeg" : "png";
     await uploadString(storageRef, base64String, "base64", { contentType: `image/${format}` });
