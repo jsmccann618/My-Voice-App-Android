@@ -1563,7 +1563,7 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
     setConfetti(true);
     setTimeout(()=>setConfetti(false), 1600);
     speak(text);
-    sendMessage(text);
+    if (navigator.onLine) sendMessage(text);
     if (notificationsEnabled) {
       fetch("/api/notify", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ message:text }) }).catch(e=>console.error("Notify error:",e));
     }
@@ -1801,9 +1801,13 @@ function ParentCompanionScreen({ onBack }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadMessages().then(msgs => { setMessages(msgs); setLoading(false); });
-    const sub = subscribeToMessages(msg => { setMessages(prev => [msg, ...prev]); });
-    return () => sub.unsubscribe();
+    if (!navigator.onLine) { setLoading(false); return; }
+    loadMessages().then(msgs => { setMessages(msgs); setLoading(false); }).catch(() => setLoading(false));
+    let sub;
+    try {
+      sub = subscribeToMessages(msg => { setMessages(prev => [msg, ...prev]); });
+    } catch(e) { console.warn("Supabase offline"); }
+    return () => sub?.unsubscribe?.();
   }, []);
 
   function formatTime(ts) { const d = new Date(ts); return d.toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" }); }
@@ -2124,21 +2128,15 @@ function CachedImage({ src, alt, style, ...props }) {
 
 // ─── Hook to resolve photo src from IndexedDB ────────────────────────────────
 function useCachedSrc(url) {
-  const [src, setSrc] = useState(null);
+  const [src, setSrc] = useState(url); // start with URL, not null
 
   useEffect(() => {
     if (!url?.startsWith("http")) { setSrc(url); return; }
-
-    // Always check IndexedDB first — if cached, use that immediately
+    // Check IndexedDB — if cached use base64, otherwise use URL
     getCachedPhoto(url).then(cached => {
-      if (cached) {
-        setSrc(cached); // use local base64 — works online AND offline
-      } else {
-        setSrc(url); // not cached yet, use URL directly (requires internet)
-        // Cache it now for next time
-        if (navigator.onLine) cachePhoto(url);
-      }
-    });
+      setSrc(cached || url);
+      if (!cached && navigator.onLine) cachePhoto(url);
+    }).catch(() => setSrc(url));
   }, [url]);
 
   return src;
