@@ -1605,7 +1605,9 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
             onManageCustomMenu={(item) => setCustomMenuItem(item)}
             onSchedule={setScheduleItem} />
         ))}
-        <CameraBlobCard color={category.color} dark={category.dark} light={category.light} onPress={()=>setShowAdd(true)} index={filtered.length} />
+        {parentMode && (
+          <CameraBlobCard color={category.color} dark={category.dark} light={category.light} onPress={()=>setShowAdd(true)} index={filtered.length} />
+        )}
       </div>
     </div>
   );
@@ -2264,6 +2266,10 @@ export default function MyVoiceApp() {
           <div style={{ fontSize:52 }}>🗣️</div>
           <div style={{ color:"#fff",fontSize:22,fontWeight:800,fontFamily:"'Nunito',sans-serif" }}>My Voice</div>
           <div style={{ color:"rgba(255,255,255,0.8)",fontSize:14,fontFamily:"'Nunito',sans-serif" }}>Loading...</div>
+          <div style={{ color:"rgba(255,255,255,0.6)",fontSize:11,fontFamily:"'Nunito',sans-serif",textAlign:"center",padding:"0 20px" }}>
+            Online: {navigator.onLine ? "yes" : "no"} | 
+            Cache: {localStorage.getItem("myvoice_data_home") ? "✅ found" : "❌ empty"}
+          </div>
         </div>
       )}
       {showPinModal && <PinModal title="Parent Mode" correctPin={activeData.parentPin} onSuccess={handlePinSuccess} onClose={()=>setShowPinModal(false)} />}
