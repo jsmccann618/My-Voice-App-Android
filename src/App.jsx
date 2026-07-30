@@ -298,6 +298,8 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
   const uid = `bc_${item.id}`;
   const hasMenu = item.subMenu?.food?.length > 0;
   const hasCustomMenu = item.customMenu?.items?.length > 0;
+  const cachedPhoto = useCachedSrc(item.photo);
+  const cachedLogo = useCachedSrc(item.logo);
 
   const DEEP_LINKS = {
     "youtube":      { app: "youtube://www.youtube.com", web: "https://www.youtube.com" },
@@ -355,8 +357,8 @@ function BlobCard({ item, phrase, color, dark, light, index, onSpeak, onEdit, on
           </defs>
           <path d={blobPath} fill={`url(#${uid}_g)`} />
           {item.logo && !item.photo && <path d={blobPath} fill="white" opacity="0.92" />}
-          {item.photo && <image href={item.photo} x="8" y="8" width="84" height="84" clipPath={`url(#${uid}_c)`} preserveAspectRatio="xMidYMid slice" opacity="0.9" />}
-          {item.logo && !item.photo && <image href={item.logo} x="12" y="12" width="76" height="76" clipPath={`url(#${uid}_c)`} preserveAspectRatio="xMidYMid meet" />}
+          {item.photo && <image href={cachedPhoto} x="8" y="8" width="84" height="84" clipPath={`url(#${uid}_c)`} preserveAspectRatio="xMidYMid slice" opacity="0.9" />}
+          {item.logo && !item.photo && <image href={cachedLogo} x="12" y="12" width="76" height="76" clipPath={`url(#${uid}_c)`} preserveAspectRatio="xMidYMid meet" />}
           {!item.photo && !item.logo && <text x="50" y="55" textAnchor="middle" dominantBaseline="middle" fontSize="38" style={{ userSelect:"none", pointerEvents:"none" }}>{item.emoji}</text>}
           <ellipse cx="36" cy="26" rx="14" ry="9" fill="white" opacity="0.28" transform="rotate(-20,36,26)" />
           <ellipse cx="30" cy="22" rx="6" ry="3.5" fill="white" opacity="0.38" transform="rotate(-20,30,22)" />
@@ -412,6 +414,7 @@ function HomeBlobCard({ cat, onClick, parentMode, index }) {
   const [squish, setSquish] = useState(false);
   const blobPath = BLOB_PATHS[index % BLOB_PATHS.length];
   const uid = `hbc_${cat.id}`;
+  const cachedPhoto = useCachedSrc(cat.photo);
   function handleClick() { setSquish(true); setTimeout(() => setSquish(false), 300); onClick(); }
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", position:"relative" }}>
@@ -427,7 +430,7 @@ function HomeBlobCard({ cat, onClick, parentMode, index }) {
           </defs>
           <path d={blobPath} fill={`url(#${uid}_g)`} />
           {cat.photo ? (
-            <image href={cat.photo} x="8" y="8" width="84" height="84" clipPath={`url(#${uid}_c)`} preserveAspectRatio="xMidYMid slice" opacity="0.88" />
+            <image href={cachedPhoto} x="8" y="8" width="84" height="84" clipPath={`url(#${uid}_c)`} preserveAspectRatio="xMidYMid slice" opacity="0.88" />
           ) : (
             <text x="50" y="55" textAnchor="middle" dominantBaseline="middle" fontSize="40" style={{ userSelect:"none" }}>{cat.emoji}</text>
           )}
@@ -957,6 +960,7 @@ function MyBodyScreen({ bodyParts, bodyPhoto, bodyZones, onBack, onUpdateBodyPar
   const [lastSpoken, setLastSpoken] = useState("");
   const [addingSymptom, setAddingSymptom] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
+  const cachedBodyPhoto = useCachedSrc(bodyPhoto);
 
   const COLOR = "#3B82F6";
   const DARK  = "#1D4ED8";
@@ -1124,7 +1128,7 @@ function MyBodyScreen({ bodyParts, bodyPhoto, bodyZones, onBack, onUpdateBodyPar
         {bodyPhoto ? (
           <>
             {/* Photo fills exactly like setup tool */}
-            <img src={bodyPhoto} alt="Logan" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", pointerEvents:"none" }} />
+            <img src={cachedBodyPhoto} alt="Logan" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", pointerEvents:"none" }} />
 
             {/* Tap zones */}
             {bodyParts.map(bp => {
@@ -1222,6 +1226,7 @@ function RestaurantOrderScreen({ item, color, dark, light, onBack, onComplete })
         {options.map((opt, i) => {
           const blobPath = BLOB_PATHS[i % BLOB_PATHS.length];
           const uid = `ro_${opt.id}`;
+          const cachedOptPhoto = useCachedSrc(opt.photo);
           return (
             <button key={opt.id} onClick={()=>handleSelect(opt)} style={{ background:"none", border:"none", cursor:"pointer", padding:0, display:"flex", flexDirection:"column", alignItems:"center", filter:`drop-shadow(0 5px 10px ${dark}55)` }}>
               <svg viewBox="0 0 100 100" style={{ width:140, height:140, display:"block", overflow:"visible" }}>
@@ -1232,7 +1237,7 @@ function RestaurantOrderScreen({ item, color, dark, light, onBack, onComplete })
                   <clipPath id={`${uid}_c`}><path d={blobPath} /></clipPath>
                 </defs>
                 <path d={blobPath} fill={`url(#${uid}_g)`} />
-                {opt.photo ? <image href={opt.photo} x="8" y="8" width="84" height="84" clipPath={`url(#${uid}_c)`} preserveAspectRatio="xMidYMid slice" opacity="0.9" /> : <text x="50" y="55" textAnchor="middle" dominantBaseline="middle" fontSize="38">{opt.emoji}</text>}
+                {opt.photo ? <image href={cachedOptPhoto} x="8" y="8" width="84" height="84" clipPath={`url(#${uid}_c)`} preserveAspectRatio="xMidYMid slice" opacity="0.9" /> : <text x="50" y="55" textAnchor="middle" dominantBaseline="middle" fontSize="38">{opt.emoji}</text>}
                 <ellipse cx="36" cy="26" rx="14" ry="9" fill="white" opacity="0.28" transform="rotate(-20,36,26)" />
               </svg>
               <span style={{ fontSize:14, fontWeight:800, color:"#1e1e1e", fontFamily:"'Nunito',sans-serif", marginTop:4, textAlign:"center" }}>{opt.name}</span>
@@ -1607,7 +1612,7 @@ function CategoryScreen({ category, onBack, onUpdateCategory, parentMode, onSpok
 }
 
 // ─── Settings Screen ──────────────────────────────────────────────────────────
-function SettingsScreen({ categories, onUpdateCategories, onBack, onChangePin, currentPin, onSave, onExport, onImport }) {
+function SettingsScreen({ categories, onUpdateCategories, onBack, onChangePin, currentPin, onSave, onExport, onImport, activeData }) {
   const [showCatPhoto, setShowCatPhoto] = useState(null);
   const [showEditCat, setShowEditCat] = useState(null);
   const [showAddCat, setShowAddCat] = useState(false);
@@ -1618,6 +1623,8 @@ function SettingsScreen({ categories, onUpdateCategories, onBack, onChangePin, c
   const [newPin, setNewPin] = useState("");
   const [pinMsg, setPinMsg] = useState("");
   const [savingPhoto, setSavingPhoto] = useState(false);
+  const [offlineStatus, setOfflineStatus] = useState(null); // null | "saving" | "done" | "error"
+  const [offlineProgress, setOfflineProgress] = useState({ done: 0, total: 0 });
   const CAT_COLORS = [
     {color:"#FF6B35",dark:"#C94A1A",light:"#FFAA85"},{color:"#4ECDC4",dark:"#2A9990",light:"#9EEEE8"},
     {color:"#A855F7",dark:"#7B22D4",light:"#D4A0FF"},{color:"#F59E0B",dark:"#B86E00",light:"#FCD34D"},
@@ -1626,6 +1633,41 @@ function SettingsScreen({ categories, onUpdateCategories, onBack, onChangePin, c
   ];
   const CAT_EMOJIS = ["📌","🏠","🎯","🌟","💡","🎨","🎵","🏆","🍀","🔔","🎒","🌍","🧠","💪","🛡️","🔑"];
   const [selColor, setSelColor] = useState(CAT_COLORS[0]);
+
+  async function handleSaveOffline() {
+    if (!navigator.onLine) {
+      alert("You need to be on WiFi to save for offline use.");
+      return;
+    }
+    setOfflineStatus("saving");
+
+    // Collect all photo URLs
+    const urls = new Set();
+    activeData?.categories?.forEach(cat => {
+      if (cat.photo?.startsWith("http")) urls.add(cat.photo);
+      cat.items?.forEach(item => {
+        if (item.photo?.startsWith("http")) urls.add(item.photo);
+        if (item.logo?.startsWith("http")) urls.add(item.logo);
+        item.subMenu?.food?.forEach(f => { if (f.photo?.startsWith("http")) urls.add(f.photo); });
+        item.subMenu?.drink?.forEach(d => { if (d.photo?.startsWith("http")) urls.add(d.photo); });
+        item.customMenu?.items?.forEach(i => { if (i.photo?.startsWith("http")) urls.add(i.photo); });
+      });
+    });
+    if (activeData?.bodyPhoto?.startsWith("http")) urls.add(activeData.bodyPhoto);
+
+    const urlList = [...urls];
+    setOfflineProgress({ done: 0, total: urlList.length });
+
+    let done = 0;
+    for (const url of urlList) {
+      await cachePhoto(url);
+      done++;
+      setOfflineProgress({ done, total: urlList.length });
+    }
+
+    setOfflineStatus("done");
+    setTimeout(() => setOfflineStatus(null), 3000);
+  }
 
   function handleCatEdit(updatedCat) { onUpdateCategories(categories.map(c => c.id===updatedCat.id ? updatedCat : c)); setShowEditCat(null); }
 
@@ -1666,6 +1708,22 @@ function SettingsScreen({ categories, onUpdateCategories, onBack, onChangePin, c
       </div>
       <div style={{ padding:"20px 20px 40px" }}>
         <button onClick={onSave} style={{ width:"100%",padding:16,borderRadius:14,border:"none",background:"#10B981",color:"#fff",fontSize:17,fontWeight:900,fontFamily:"'Nunito',sans-serif",cursor:"pointer",marginBottom:12,boxShadow:"0 4px 14px rgba(16,185,129,0.4)" }}>💾 Save All Data to Firebase</button>
+
+        {/* Offline photo save button */}
+        <button onClick={handleSaveOffline} disabled={offlineStatus==="saving"} style={{
+          width:"100%", padding:16, borderRadius:14, border:"none",
+          background: offlineStatus==="done" ? "#10B981" : offlineStatus==="saving" ? "#999" : "#3B82F6",
+          color:"#fff", fontSize:17, fontWeight:900,
+          fontFamily:"'Nunito',sans-serif", cursor: offlineStatus==="saving" ? "not-allowed" : "pointer",
+          marginBottom:12, boxShadow:"0 4px 14px rgba(59,130,246,0.4)",
+        }}>
+          {offlineStatus === "saving"
+            ? `📲 Saving... ${offlineProgress.done}/${offlineProgress.total} photos`
+            : offlineStatus === "done"
+            ? `✅ All ${offlineProgress.total} photos saved to tablet!`
+            : "📲 Save Everything for Offline"}
+        </button>
+
         <button onClick={onExport} style={{ width:"100%",padding:16,borderRadius:14,border:"none",background:"#667eea",color:"#fff",fontSize:17,fontWeight:900,fontFamily:"'Nunito',sans-serif",cursor:"pointer",marginBottom:12,boxShadow:"0 4px 14px rgba(102,126,234,0.4)" }}>📥 Export Backup to Device</button>
         <label style={{ display:"block",width:"100%",padding:16,borderRadius:14,background:"#F59E0B",color:"#fff",fontSize:17,fontWeight:900,fontFamily:"'Nunito',sans-serif",cursor:"pointer",marginBottom:20,boxShadow:"0 4px 14px rgba(245,158,11,0.4)",textAlign:"center",boxSizing:"border-box" }}>
           📤 Import Backup from Device<input type="file" accept=".json" onChange={onImport} style={{ display:"none" }} />
@@ -1978,33 +2036,112 @@ function VoiceActivatedScreen({ categories, parentPin, onSpeak, onExit }) {
   );
 }
 
-// ─── Precache all photos for offline use ─────────────────────────────────────
-function precacheAllPhotos(data) {
-  const urls = new Set();
+// ─── IndexedDB Photo Cache (works without service worker) ────────────────────
+const PHOTO_DB_NAME = "myvoice-photos";
+const PHOTO_DB_VERSION = 1;
+const PHOTO_STORE = "photos";
 
-  // Collect every photo URL from the data
+function openPhotoDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(PHOTO_DB_NAME, PHOTO_DB_VERSION);
+    req.onupgradeneeded = e => {
+      e.target.result.createObjectStore(PHOTO_STORE, { keyPath: "url" });
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function getCachedPhoto(url) {
+  if (!url?.startsWith("http")) return null;
+  try {
+    const db = await openPhotoDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(PHOTO_STORE, "readonly");
+      const req = tx.objectStore(PHOTO_STORE).get(url);
+      req.onsuccess = () => resolve(req.result?.data || null);
+      req.onerror = () => resolve(null);
+    });
+  } catch { return null; }
+}
+
+async function cachePhoto(url) {
+  if (!url?.startsWith("http")) return;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return;
+    const blob = await response.blob();
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const db = await openPhotoDB();
+        const tx = db.transaction(PHOTO_STORE, "readwrite");
+        tx.objectStore(PHOTO_STORE).put({ url, data: e.target.result });
+      } catch {}
+    };
+    reader.readAsDataURL(blob);
+  } catch {}
+}
+
+// Collect all photo URLs from app data and cache them
+async function precacheAllPhotos(data) {
+  const urls = new Set();
   data.categories?.forEach(cat => {
     if (cat.photo?.startsWith("http")) urls.add(cat.photo);
     cat.items?.forEach(item => {
       if (item.photo?.startsWith("http")) urls.add(item.photo);
       if (item.logo?.startsWith("http")) urls.add(item.logo);
-      // Food/drink sub-menu photos
       item.subMenu?.food?.forEach(f => { if (f.photo?.startsWith("http")) urls.add(f.photo); });
       item.subMenu?.drink?.forEach(d => { if (d.photo?.startsWith("http")) urls.add(d.photo); });
-      // Custom sub-menu photos
       item.customMenu?.items?.forEach(i => { if (i.photo?.startsWith("http")) urls.add(i.photo); });
     });
   });
-
-  // Body photo
   if (data.bodyPhoto?.startsWith("http")) urls.add(data.bodyPhoto);
+  // Cache each one — fire and forget, don't block the UI
+  for (const url of urls) { cachePhoto(url); }
+}
 
-  if (urls.size === 0) return;
+// ─── Cached Image component — uses IndexedDB when offline ────────────────────
+function CachedImage({ src, alt, style, ...props }) {
+  const [imgSrc, setImgSrc] = useState(src);
 
-  // Send to service worker to cache
-  navigator.serviceWorker.ready.then(reg => {
-    reg.active?.postMessage({ type: "PRECACHE_PHOTOS", urls: [...urls] });
-  });
+  useEffect(() => {
+    if (!src?.startsWith("http")) { setImgSrc(src); return; }
+    setImgSrc(src); // try URL first
+    // If we go offline and it fails, load from IndexedDB
+  }, [src]);
+
+  function handleError() {
+    // URL failed (offline) — try IndexedDB
+    getCachedPhoto(src).then(cached => {
+      if (cached) setImgSrc(cached);
+    });
+  }
+
+  if (!imgSrc) return null;
+  return <img src={imgSrc} alt={alt || ""} style={style} onError={handleError} {...props} />;
+}
+
+// ─── Hook to resolve photo src from IndexedDB ────────────────────────────────
+function useCachedSrc(url) {
+  const [src, setSrc] = useState(null);
+
+  useEffect(() => {
+    if (!url?.startsWith("http")) { setSrc(url); return; }
+
+    // Always check IndexedDB first — if cached, use that immediately
+    getCachedPhoto(url).then(cached => {
+      if (cached) {
+        setSrc(cached); // use local base64 — works online AND offline
+      } else {
+        setSrc(url); // not cached yet, use URL directly (requires internet)
+        // Cache it now for next time
+        if (navigator.onLine) cachePhoto(url);
+      }
+    });
+  }, [url]);
+
+  return src;
 }
 
 // ─── App Root ─────────────────────────────────────────────────────────────────
@@ -2039,11 +2176,7 @@ export default function MyVoiceApp() {
     link.rel="stylesheet"; link.href=FONT_LINK;
     document.head.appendChild(link);
 
-    // Register service worker for offline photo caching
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
-    }
-
+    // Load data — always resolves (uses localStorage if offline)
     loadFromFirestore(SEED_DATA).then(d => {
       const fixed = {
         ...d,
@@ -2060,25 +2193,28 @@ export default function MyVoiceApp() {
       };
       setData(fixed);
       if (fixed.voiceMode) setVoiceMode(true);
-      setLoaded(true);
-
-      // Preload all photos into service worker cache while online
-      if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-        precacheAllPhotos(fixed);
-      } else if ("serviceWorker" in navigator) {
-        // Wait for SW to become active then precache
-        navigator.serviceWorker.ready.then(() => precacheAllPhotos(fixed));
-      }
+      if (navigator.onLine) precacheAllPhotos(fixed);
+    }).catch(e => {
+      console.error("Load error:", e);
+    }).finally(() => {
+      setLoaded(true); // ALWAYS show the app, no matter what
     });
 
     setSchoolData(SCHOOL_SEED_DATA);
 
-    const sub = subscribeToMessages(msg => {
-      if (msg.message === "👍 On my way!") {
-        setShowOnMyWay(true); speak("On my way!");
-        setTimeout(() => setShowOnMyWay(false), 4000);
-      }
-    });
+    // Only subscribe to messages when online
+    if (!navigator.onLine) return;
+    let sub;
+    try {
+      sub = subscribeToMessages(msg => {
+        if (msg.message === "👍 On my way!") {
+          setShowOnMyWay(true); speak("On my way!");
+          setTimeout(() => setShowOnMyWay(false), 4000);
+        }
+      });
+    } catch(e) {
+      console.warn("Supabase offline:", e);
+    }
     return () => sub?.unsubscribe?.();
   }, []);
 
@@ -2285,6 +2421,7 @@ export default function MyVoiceApp() {
           onUpdateCategories={updateAllCategories}
           onChangePin={pin=>persist({...activeData,parentPin:pin})}
           onBack={()=>setScreen("home")}
+          activeData={activeData}
           onSave={()=>{ saveData(activeData); alert("✅ Saved to Firebase successfully!"); }}
           onImport={(e)=>{
             const file=e.target.files[0]; if(!file) return;
