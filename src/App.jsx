@@ -1978,6 +1978,35 @@ function VoiceActivatedScreen({ categories, parentPin, onSpeak, onExit }) {
   );
 }
 
+// ─── Precache all photos for offline use ─────────────────────────────────────
+function precacheAllPhotos(data) {
+  const urls = new Set();
+
+  // Collect every photo URL from the data
+  data.categories?.forEach(cat => {
+    if (cat.photo?.startsWith("http")) urls.add(cat.photo);
+    cat.items?.forEach(item => {
+      if (item.photo?.startsWith("http")) urls.add(item.photo);
+      if (item.logo?.startsWith("http")) urls.add(item.logo);
+      // Food/drink sub-menu photos
+      item.subMenu?.food?.forEach(f => { if (f.photo?.startsWith("http")) urls.add(f.photo); });
+      item.subMenu?.drink?.forEach(d => { if (d.photo?.startsWith("http")) urls.add(d.photo); });
+      // Custom sub-menu photos
+      item.customMenu?.items?.forEach(i => { if (i.photo?.startsWith("http")) urls.add(i.photo); });
+    });
+  });
+
+  // Body photo
+  if (data.bodyPhoto?.startsWith("http")) urls.add(data.bodyPhoto);
+
+  if (urls.size === 0) return;
+
+  // Send to service worker to cache
+  navigator.serviceWorker.ready.then(reg => {
+    reg.active?.postMessage({ type: "PRECACHE_PHOTOS", urls: [...urls] });
+  });
+}
+
 // ─── App Root ─────────────────────────────────────────────────────────────────
 export default function MyVoiceApp() {
   const [data, setData] = useState(SEED_DATA);
@@ -2010,6 +2039,11 @@ export default function MyVoiceApp() {
     link.rel="stylesheet"; link.href=FONT_LINK;
     document.head.appendChild(link);
 
+    // Register service worker for offline photo caching
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+
     loadFromFirestore(SEED_DATA).then(d => {
       const fixed = {
         ...d,
@@ -2027,6 +2061,14 @@ export default function MyVoiceApp() {
       setData(fixed);
       if (fixed.voiceMode) setVoiceMode(true);
       setLoaded(true);
+
+      // Preload all photos into service worker cache while online
+      if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+        precacheAllPhotos(fixed);
+      } else if ("serviceWorker" in navigator) {
+        // Wait for SW to become active then precache
+        navigator.serviceWorker.ready.then(() => precacheAllPhotos(fixed));
+      }
     });
 
     setSchoolData(SCHOOL_SEED_DATA);
